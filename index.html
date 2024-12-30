@@ -220,12 +220,7 @@
                   }
               }
           });
-          joystick.on('end', function (evt, data) {
-    // Set the value to 0 when the joystick is released
-    set(directionRef, 0); // Reset to center when joystick is released
-    document.getElementById('joystick-info').innerText = "Joystick released; Position: Center";
-    console.log("Joystick released; Position set to center");
-});
+        
 
       </script>
 
