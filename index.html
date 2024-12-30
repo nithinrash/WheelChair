@@ -3,84 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wheel chair controlk</title>
+    <title>Wheel chair control</title>
      <link rel="stylesheet" href="styles.css">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 0;
-            padding: 20px;
-            background-color: #cdcccd; /* Background color */
-        }
-        #direction {
-            margin-top: 20px;
-            font-size: 24px;
-        }
-        #image-container {
-            margin-top: 20px;
-            transition: transform 0.5s; /* Smooth transition for flipping */
-        }
-        iframe {
-            max-width: 100%; /* Make iframe responsive */
-            height: auto; /* Maintain aspect ratio */
-        }
-        #joystick {
-            position: relative;
-            width: 200px;
-            height: 200px;
-            margin: 20px auto;
-            display: none; /* Initially hidden */
-        }
-        
-        /* Toggle Switch Styles */
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 60px;
-            height: 34px;
-        }
 
-        .switch input {
-            opacity: 0; /* Hide default checkbox */
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 26px;
-            width: 26px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-        }
-
-        input:checked + .slider {
-            background-color: #2196F3; /* Color when checked */
-        }
-
-        input:checked + .slider:before {
-            transform: translateX(26px); /* Move the slider when checked */
-        }
 
     </style>
 </head>
 <body>
-    <h1>Toggle Between GIF and Joystick</h1>
+    <h1>Wheel chair control</h1>
 
     <!-- Toggle Switch -->
     <label class="switch">
@@ -88,9 +19,9 @@
         <span class="slider"></span>
     </label>
 
-    <div id="direction">Loading...</div>
+    <!-- <div id="direction">Loading...</div> -->
     
-    <div id="image-container">
+    <div id="image-container" style="color: #cdcccd;">
         <iframe id="giphy-iframe" src="https://giphy.com/embed/IeQTqWKqQGghiKS9qU" width="480" height="442" frameBorder="0" class="giphy-embed" allowFullScreen></iframe>
     </div>
 
@@ -125,19 +56,21 @@
         const directionRef = ref(database, 'motion/direction');
         const joystickContainer = document.getElementById('joystick');
         const options = {
-            zone: joystickContainer,
-            mode: 'static',
-            position: { left: '50%', top: '50%' },
-            color: 'red',
-            size: 200,
-            lockX: false,
-            lockY: false,
-            catchDistance: 50,
-            threshold: 0.1,
-            multitouch: true,
-            fadeTime: 1000,
-            restOpacity: 0.5,
-            dynamicPage: true
+            zone: document.getElementById('joystick'),
+    mode: 'static',
+    position: { left: '50%', top: '85%' }, // Position it towards the bottom of the container
+    color: 'black', // Make the default joystick invisible
+    size: 200,
+    lockX: false,
+    lockY: false,
+    catchDistance: 50,
+    threshold: 0.1,
+    multitouch: true,
+    fadeTime: 1000,
+    restOpacity: 0.5,
+    dynamicPage: true
+           
+
         };
 
         const joystick = nipplejs.create(options);
@@ -177,7 +110,7 @@
       <!-- Include NippleJS Library -->
       <script src="https://unpkg.com/nipplejs@0.8.4/dist/nipplejs.js"></script>
 
-      <p><a href="https://giphy.com/gifs/animation-walk-cycle-character-design-IeQTqWKqQGghiKS9qU">via GIPHY</a></p>
+     
 
       <script>
           function toggleDisplay() {
