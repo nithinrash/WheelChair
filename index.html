@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wheel chair control</title>
+    <title>Wheel chair controlk</title>
      <link rel="stylesheet" href="styles.css">
     <style>
 
@@ -11,7 +11,7 @@
     </style>
 </head>
 <body>
-    <h1>Wheel chair control</h1>
+    <h1>Toggle Between GIF and Joystick</h1>
 
     <!-- Toggle Switch -->
     <label class="switch">
@@ -113,6 +113,16 @@
      
 
       <script>
+
+
+function checkToggleState() {
+        const toggleSwitch = document.getElementById('toggleSwitch');
+        const joystickContainer = document.getElementById('joystick');
+        joystickContainer.style.display = toggleSwitch.checked ? 'block' : 'none';
+    }
+
+
+    
           function toggleDisplay() {
               const toggleSwitch = document.getElementById('toggleSwitch');
               const joystickContainer = document.getElementById('joystick');
