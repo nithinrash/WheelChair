@@ -12,23 +12,27 @@
             padding: 20px;
             background-color: #cdcccd; /* Background color */
         }
+
         #direction {
             margin-top: 20px;
             font-size: 24px;
         }
+
         #image-container {
             margin-top: 20px;
             transition: transform 0.5s; /* Smooth transition for flipping */
         }
+
         iframe {
             max-width: 100%; /* Make iframe responsive */
             height: auto; /* Maintain aspect ratio */
         }
+
         #joystick {
             position: relative;
             width: 200px;
             height: 200px;
-            margin: 20px auto;
+            margin: 40px auto 20px; /* Margin for spacing below GIF */
             display: none; /* Initially hidden */
         }
         
@@ -88,11 +92,12 @@
 
     <div id="direction">Loading...</div>
     
+    <!-- GIF Always Visible -->
     <div id="image-container">
         <iframe id="giphy-iframe" src="https://giphy.com/embed/IeQTqWKqQGghiKS9qU" width="480" height="442" frameBorder="0" class="giphy-embed" allowFullScreen></iframe>
     </div>
 
-    <!-- Joystick Container -->
+    <!-- Joystick Container (Below the GIF) -->
     <div id="joystick"></div>
 
     <!-- Button to Start Listening -->
@@ -125,7 +130,6 @@
             const direction = snapshot.val();
             document.getElementById('direction').innerText = direction || 'No data available';
 
-            const imageContainer = document.getElementById('image-container');
             switch (direction) {
                 case 5:
                     document.getElementById('direction').innerText += ' - Front';
@@ -168,7 +172,6 @@
         function toggleDisplay() {
             const toggleSwitch = document.getElementById('toggleSwitch');
             joystickContainer.style.display = toggleSwitch.checked ? 'block' : 'none';
-            document.getElementById('giphy-iframe').style.display = toggleSwitch.checked ? 'none' : 'block';
         }
 
         let recognition;
@@ -185,8 +188,8 @@
 
             recognition.onresult = (event) => {
                 const transcript = event.results[0][0].transcript.toLowerCase();
-                if (transcript.includes("start")) toggleSwitch.checked = true;
-                if (transcript.includes("stop")) toggleSwitch.checked = false;
+                if (transcript.includes("start")) document.getElementById('toggleSwitch').checked = true;
+                if (transcript.includes("stop")) document.getElementById('toggleSwitch').checked = false;
                 toggleDisplay();
             };
 
