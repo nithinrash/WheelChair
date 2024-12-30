@@ -110,27 +110,6 @@ button:hover {
 
 
 
-#joystick .nipple {
-    background-color: #333; /* Dark grey, similar to Xbox joystick color */
-    border: 1px solid #555; /* Slightly lighter border */
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5); /* Subtle shadow for 3D effect */
-}
-
-#joystick .nipple:before {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 35%; /* Smaller circle in the center */
-    height: 35%;
-    background-color: #222; /* Even darker center button */
-    border-radius: 50%;
-    box-shadow: inset 0 2px 5px rgba(255, 255, 255, 0.2), /* Inner light for a slight 3D effect */
-                0 1px 2px rgba(0, 0, 0, 0.4); /* Outer dark shadow */
-}
-
-
 
 @media (max-width: 600px) {
     body {
@@ -149,16 +128,7 @@ button:hover {
         min-height: 50vh;  /* Makes the GIF more prominent */
     }
 
-    #joystick {
-        margin-top: 500px;
-        max-width: 100px;  /* Smaller joystick for smaller screens */
-        height: 100px;
-        margin-top: 100px;  /* Significantly increased margin to prevent overlapping */
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
+  
     .switch, .slider {
         width: 40px;  /* Smaller switch for mobile */
         height: 22px;
