@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Toggle Switch for GIF and Joystick</title>
+    <title>Wheel chair controlk</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -122,106 +122,53 @@
 
         // Reference to the motion/direction path in your database
         const directionRef = ref(database, 'motion/direction');
+        const joystickContainer = document.getElementById('joystick');
+        const options = {
+            zone: joystickContainer,
+            mode: 'static',
+            position: { left: '50%', top: '50%' },
+            color: 'red',
+            size: 200,
+            lockX: false,
+            lockY: false,
+            catchDistance: 50,
+            threshold: 0.1,
+            multitouch: true,
+            fadeTime: 1000,
+            restOpacity: 0.5,
+            dynamicPage: true
+        };
 
-        // Fetch and display the direction data
-        onValue(directionRef, (snapshot) => {
-            const direction = snapshot.val();
-            document.getElementById('direction').innerText = direction ? direction : 'No data available';
+        const joystick = nipplejs.create(options);
 
-             // Handle image display logic based on the value
-             const imageContainer = document.getElementById('image-container');
-            
-             if (direction === 15) {
-                imageContainer.style.transform = 'rotateY(0deg)'; // Show normally
-                document.getElementById('direction').innerText += ' - Normal Position';
-              } else if (direction === 20) {
-                imageContainer.style.transform = 'rotateY(180deg)'; // Flip the image
-                document.getElementById('direction').innerText += ' - Flipped Position';
-              }
+        joystick.on('move', function (evt, data) {
+            const angleDegree = data.angle ? data.angle.degree : 0; // Ensure angle is defined
+            let value;
 
-              // Display specific text based on values
-              let additionalText = '';
-              switch (direction) {
-                case 5:
-                  additionalText = 'Front';
-                  break;
-                case 10:
-                  additionalText = 'Reverse';
-                  break;
-                case 15:
-                  additionalText = 'Left';
-                  break;
-                case 20:
-                  additionalText = 'Right';
-                  break;
-                case 0:
-                  additionalText = 'Stop';
-                default:
-                  additionalText = '';
-                  break;
-              }
-              
-              if (additionalText) {
-                document.getElementById('direction').innerText += ` - ${additionalText}`;
-              }
+            if (data.distance < 1) {  // Assuming the center zone is less than 1
+                value = 0; // Center position
+                document.getElementById('direction').innerText = value;
+            } else if (angleDegree >= 95 && angleDegree < 100) {
+                value = 5; // Up
+            } else if (angleDegree >= 260 && angleDegree < 280) {
+                value = 10; // Down
+            } else if (angleDegree > 180 && angleDegree < 190) {
+                value = 15; // Left
+            } else if (angleDegree >= 350 || angleDegree < 20) {
+                value = 20; // Right
+            }
+            else{
+                value = 0;
+            }
 
-          }, (error) => {
-              console.error("Error fetching data:", error);
-              document.getElementById('direction').innerText = 'Error fetching data';
-          });
+            console.log("Joystick Angle:", angleDegree, "Value:", value);
+            set(directionRef, value); // Update Firebase with new value
+        });
 
-          // Initialize Joystick
-          const joystickContainer = document.getElementById('joystick');
-          
-          const options = {
-              zone: joystickContainer,
-              mode: 'static',
-              position: { left: '50%', top: '50%' },
-              color: 'blue',
-              size: 200,
-              lockX: false,
-              lockY: false,
-              catchDistance: 50,
-              threshold : 0.1,
-              multitouch : true,
-              fadeTime : 1000,
-              restOpacity : 0.5,
-              dynamicPage : true
-          };
-
-          const joystick = nipplejs.create(options);
-
-          joystick.on('move', function (evt, data) {
-              if (data && data.angle) { // Check if data and angle are defined
-                  const angleDegree = data.angle.degree; // Get angle in degrees
-                  console.log("Joystick Angle:", angleDegree); // Log the angle
-
-                  let value;
-
-                  // Define the direction based on the specified angle ranges with slight deviations
-                  if (angleDegree >= 80 && angleDegree < 100) { // Up with slight deviation
-                      value = 5; // Up
-                      console.log("Up");
-                  } else if (angleDegree >= 260 && angleDegree < 280) { // Down with slight deviation
-                      value = 10; // Down
-                      console.log("Down");
-                  } else if (angleDegree > 170 && angleDegree < 190) { // Left with slight deviation
-                      value = 15; // Left
-                      console.log("Left");
-                  } else if (angleDegree >= 350 || angleDegree < 20) { // Right with slight deviation
-                      value = 20; // Right
-                      console.log("Right");
-                  }else {
-                    value = 0; // Center position
-                    console.log("Center");
-        }
-
-                  // Update Firebase with new value only if it's defined
-                  if (value !== undefined) {
-                      set(directionRef, value); // Update Firebase with new value
-                  }
-              }
-          });
+        joystick.on('end', function () {
+            set(directionRef, 0); // Reset to center when joystick is released
+            document.getElementById('direction').innerText = 'Stop'; // Display 'Stop' when joystick is centered
+        });
         
 
       </script>
