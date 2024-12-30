@@ -20,22 +20,24 @@
 
         #image-container {
             margin-top: 20px;
-            transition: transform 0.5s; /* Smooth transition for flipping */
+            transition: transform 0.5s;
         }
 
         iframe {
-            max-width: 100%; /* Make iframe responsive */
-            height: auto; /* Maintain aspect ratio */
+            max-width: 100%;
+            height: auto;
         }
 
         #joystick {
             position: relative;
             width: 200px;
             height: 200px;
-            margin: 40px auto 20px; /* Margin for spacing below GIF */
-            display: none; /* Initially hidden */
+            margin: 40px auto 20px;
+            display: none;
+            touch-action: none; /* Prevent touch interference */
+            user-select: none; /* Avoid text selection on touch */
         }
-        
+
         /* Toggle Switch Styles */
         .switch {
             position: relative;
@@ -45,7 +47,7 @@
         }
 
         .switch input {
-            opacity: 0; /* Hide default checkbox */
+            opacity: 0;
             width: 0;
             height: 0;
         }
@@ -73,11 +75,11 @@
         }
 
         input:checked + .slider {
-            background-color: #2196F3; /* Color when checked */
+            background-color: #2196F3;
         }
 
         input:checked + .slider:before {
-            transform: translateX(26px); /* Move the slider when checked */
+            transform: translateX(26px);
         }
     </style>
 </head>
@@ -107,11 +109,9 @@
 
     <!-- Include Firebase SDK -->
     <script type="module">
-        // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.6/firebase-app.js";
         import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/9.6.6/firebase-database.js";
 
-        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyC7KZJgRlu1mpwJy7_Q1GQ13ziBVvw66IU",
             authDomain: "smart-wheel-chair-eccdf.firebaseapp.com",
@@ -150,53 +150,59 @@
     <!-- Joystick Integration -->
     <script src="https://unpkg.com/nipplejs@0.8.4/dist/nipplejs.js"></script>
     <script>
-        const joystickContainer = document.getElementById('joystick');
-        const joystick = nipplejs.create({
-            zone: joystickContainer,
-            mode: 'static',
-            position: { left: '50%', top: '50%' },
-            color: 'blue',
-            size: 200,
-        });
+        let joystick;
 
-        joystick.on('move', function (evt, data) {
-            let value;
-            if (data.angle.degree >= 80 && data.angle.degree <= 100) value = 5; 
-            else if (data.angle.degree >= 260 && data.angle.degree <= 280) value = 10;
-            else if (data.angle.degree > 170 && data.angle.degree <= 190) value = 15;
-            else if (data.angle.degree <= 20 || data.angle.degree >= 350) value = 20;
+        function initializeJoystick() {
+            const joystickContainer = document.getElementById('joystick');
+            if (joystick) joystick.destroy(); // Reset if already initialized
 
-            if (value !== undefined) set(directionRef, value);
-        });
+            joystick = nipplejs.create({
+                zone: joystickContainer,
+                mode: 'static',
+                position: { left: '50%', top: '50%' },
+                color: 'blue',
+                size: 200,
+            });
 
-        function toggleDisplay() {
-            const toggleSwitch = document.getElementById('toggleSwitch');
-            joystickContainer.style.display = toggleSwitch.checked ? 'block' : 'none';
+            joystick.on('move', (evt, data) => {
+                if (data && data.angle) {
+                    let value;
+                    if (data.angle.degree >= 80 && data.angle.degree <= 100) value = 5;
+                    else if (data.angle.degree >= 260 && data.angle.degree <= 280) value = 10;
+                    else if (data.angle.degree > 170 && data.angle.degree <= 190) value = 15;
+                    else if (data.angle.degree <= 20 || data.angle.degree >= 350) value = 20;
+
+                    if (value !== undefined) set(ref(database, 'motion/direction'), value);
+                }
+            });
         }
 
-        let recognition;
-        let isListening = false;
+        function toggleDisplay() {
+            const joystickContainer = document.getElementById('joystick');
+            const toggleSwitch = document.getElementById('toggleSwitch');
+            joystickContainer.style.display = toggleSwitch.checked ? 'block' : 'none';
 
+            if (toggleSwitch.checked) initializeJoystick();
+        }
+
+        let isListening = false;
         function startSpeechRecognition() {
             if (isListening) return;
 
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (!SpeechRecognition) return;
 
-            recognition = new SpeechRecognition();
+            const recognition = new SpeechRecognition();
             isListening = true;
 
             recognition.onresult = (event) => {
                 const transcript = event.results[0][0].transcript.toLowerCase();
-                if (transcript.includes("start")) document.getElementById('toggleSwitch').checked = true;
-                if (transcript.includes("stop")) document.getElementById('toggleSwitch').checked = false;
+                if (transcript.includes("start")) toggleSwitch.checked = true;
+                if (transcript.includes("stop")) toggleSwitch.checked = false;
                 toggleDisplay();
             };
 
-            recognition.onend = () => {
-                isListening = false;
-            };
-
+            recognition.onend = () => isListening = false;
             recognition.start();
         }
     </script>
