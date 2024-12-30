@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wheell chair control</title>
+    <title>Wheel chair control</title>
      <link rel="stylesheet" href="styles.css">
     <style>
 
@@ -81,18 +81,20 @@
             if (data.distance < 1) {  // Assuming the center zone is less than 1
                 value = 0; // Center position
                 document.getElementById('direction').innerText = value;
-            } else if (angleDegree >= 95 && angleDegree < 100) {
+            } else if (angleDegree >= 85 && angleDegree < 100) {
                 value = 5; // Up
             } else if (angleDegree >= 260 && angleDegree < 280) {
                 value = 10; // Down
-            } else if (angleDegree > 180 && angleDegree < 190) {
-                value = 15; // Left
             } else if (angleDegree >= 350 || angleDegree < 20) {
+                value = 15; // Left
+            } else if (angleDegree > 180 && angleDegree < 190) {
                 value = 20; // Right
             } else {
                 value = 0;
             }
-    
+
+            //angleDegree > 180 && angleDegree < 190 left
+    //angleDegree >= 350 || angleDegree < 20
             console.log("Joystick Angle:", angleDegree, "Value:", value);
             set(directionRef, value) // Update Firebase with new value
                 .then(() => console.log("Direction value updated in Firebase:", value))
