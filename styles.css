@@ -1,0 +1,173 @@
+body {
+    font-family: 'Arial', sans-serif;
+    text-align: center;
+    margin: 0;
+    padding: 20px;
+    background-color: #cdcccd;
+}
+
+#direction, #joystick-info {
+    font-size: 16px;
+    padding: 10px;
+    color: #333;
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-top: 20px;
+}
+
+#image-container {
+    margin-top: 20px;
+    padding: 10px;
+    background: #cdcccd;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: transform 0.5s;
+}
+
+iframe {
+    width: 100%;
+    max-width: 480px;
+    height: auto;
+    border-radius: 5px;
+}
+
+#joystick {
+    display: none;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    max-width: 200px;
+    height: 200px;
+    margin: 20px auto;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+    margin-top: 20px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+    border: 2px solid #2196F3;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 0px;
+    bottom: 0px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+    border: 2px solid #87CEFA;
+}
+
+input:checked + .slider {
+    background-color: #2196F3;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 16px;
+    color: white;
+    background-color: #007BFF;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 20px;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+
+
+
+#joystick .nipple {
+    background-color: #333; /* Dark grey, similar to Xbox joystick color */
+    border: 1px solid #555; /* Slightly lighter border */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5); /* Subtle shadow for 3D effect */
+}
+
+#joystick .nipple:before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 35%; /* Smaller circle in the center */
+    height: 35%;
+    background-color: #222; /* Even darker center button */
+    border-radius: 50%;
+    box-shadow: inset 0 2px 5px rgba(255, 255, 255, 0.2), /* Inner light for a slight 3D effect */
+                0 1px 2px rgba(0, 0, 0, 0.4); /* Outer dark shadow */
+}
+
+
+
+@media (max-width: 600px) {
+    body {
+        padding: 10px;
+    }
+
+    #direction, #joystick-info, #image-container, button {
+        font-size: 14px;
+        padding: 5px;
+        
+    }
+
+    iframe {
+        max-width: 100%;  /* Ensures the iframe uses the full width of its container */
+        height: auto;  /* Keeps the aspect ratio intact */
+        min-height: 50vh;  /* Makes the GIF more prominent */
+    }
+
+    #joystick {
+        margin-top: 500px;
+        max-width: 100px;  /* Smaller joystick for smaller screens */
+        height: 100px;
+        margin-top: 100px;  /* Significantly increased margin to prevent overlapping */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .switch, .slider {
+        width: 40px;  /* Smaller switch for mobile */
+        height: 22px;
+    }
+
+    .slider:before {
+        height: 18px;
+        width: 18px;
+    }
+}
+
+
