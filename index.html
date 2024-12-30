@@ -154,7 +154,9 @@
 
         function initializeJoystick() {
             const joystickContainer = document.getElementById('joystick');
-            if (joystick) joystick.destroy(); // Reset if already initialized
+            if (joystick) {
+                joystick.destroy(); // Destroy existing joystick instance
+            }
 
             joystick = nipplejs.create({
                 zone: joystickContainer,
@@ -162,12 +164,14 @@
                 position: { left: '50%', top: '50%' },
                 color: 'blue',
                 size: 200,
+                multitouch: true,
+                restJoystick: true
             });
 
             joystick.on('move', (evt, data) => {
-                if (data && data.angle) {
+                if (data.angle) {
                     let value;
-                    if (data.angle.degree >= 80 && data.angle.degree <= 100) value = 5;
+                    if (data.angle.degree >= 80 && data.angle.degree <= 100) value = 5; 
                     else if (data.angle.degree >= 260 && data.angle.degree <= 280) value = 10;
                     else if (data.angle.degree > 170 && data.angle.degree <= 190) value = 15;
                     else if (data.angle.degree <= 20 || data.angle.degree >= 350) value = 20;
@@ -180,6 +184,7 @@
         function toggleDisplay() {
             const joystickContainer = document.getElementById('joystick');
             const toggleSwitch = document.getElementById('toggleSwitch');
+
             joystickContainer.style.display = toggleSwitch.checked ? 'block' : 'none';
 
             if (toggleSwitch.checked) initializeJoystick();
