@@ -36,7 +36,7 @@
         // Import the necessary Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.6/firebase-app.js";
         import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/9.6.6/firebase-database.js";
-
+    
         // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyC7KZJgRlu1mpwJy7_Q1GQ13ziBVvw66IU",
@@ -47,38 +47,37 @@
             messagingSenderId: "792677170249",
             appId: "1:792677170249:web:9a70ea01cfc9636035d398"
         };
-
+    
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
-
-        // Reference to the motion/direction path in your database
+        const toggleFlagRef = ref(database, 'motion/flag');
         const directionRef = ref(database, 'motion/direction');
         const joystickContainer = document.getElementById('joystick');
+    
+        // Joystick Options
         const options = {
-            zone: document.getElementById('joystick'),
-    mode: 'static',
-    position: { left: '50%', top: '85%' }, // Position it towards the bottom of the container
-    color: 'blue', // Make the default joystick invisible
-    size: 200,
-    lockX: false,
-    lockY: false,
-    catchDistance: 50,
-    threshold: 0.1,
-    multitouch: true,
-    fadeTime: 1000,
-    restOpacity: 0.5,
-    dynamicPage: true
-           
-
+            zone: joystickContainer,
+            mode: 'static',
+            position: { left: '50%', top: '85%' }, // Position it towards the bottom of the container
+            color: 'black', // Make the default joystick invisible
+            size: 200,
+            lockX: false,
+            lockY: false,
+            catchDistance: 50,
+            threshold: 0.1,
+            multitouch: true,
+            fadeTime: 1000,
+            restOpacity: 0.5,
+            dynamicPage: true
         };
-
+    
         const joystick = nipplejs.create(options);
-
+    
         joystick.on('move', function (evt, data) {
             const angleDegree = data.angle ? data.angle.degree : 0; // Ensure angle is defined
             let value;
-
+    
             if (data.distance < 1) {  // Assuming the center zone is less than 1
                 value = 0; // Center position
                 document.getElementById('direction').innerText = value;
@@ -90,22 +89,26 @@
                 value = 15; // Left
             } else if (angleDegree >= 350 || angleDegree < 20) {
                 value = 20; // Right
-            }
-            else{
+            } else {
                 value = 0;
             }
-
+    
             console.log("Joystick Angle:", angleDegree, "Value:", value);
-            set(directionRef, value); // Update Firebase with new value
+            set(directionRef, value) // Update Firebase with new value
+                .then(() => console.log("Direction value updated in Firebase:", value))
+                .catch((error) => console.error("Error updating direction:", error));
         });
-
+    
         joystick.on('end', function () {
-            set(directionRef, 0); // Reset to center when joystick is released
-            document.getElementById('direction').innerText = 'Stop'; // Display 'Stop' when joystick is centered
+            set(directionRef, 0) // Reset to center when joystick is released
+                .then(() => console.log("Joystick reset to center in Firebase"))
+                .catch((error) => console.error("Error resetting direction:", error));
+             // Display 'Stop' when joystick is centered
         });
-        
 
-      </script>
+        // Listen to toggle status from Firebase and log it
+
+    </script>
 
       <!-- Include NippleJS Library -->
       <script src="https://unpkg.com/nipplejs@0.8.4/dist/nipplejs.js"></script>
@@ -115,24 +118,59 @@
       <script>
 
 
-function checkToggleState() {
-        const toggleSwitch = document.getElementById('toggleSwitch');
-        const joystickContainer = document.getElementById('joystick');
-        joystickContainer.style.display = toggleSwitch.checked ? 'block' : 'none';
+function toggleDisplay() {
+    const toggleSwitch = document.getElementById('toggleSwitch');
+    const joystickContainer = document.getElementById('joystick');
+    const firebaseURL = 'https://smart-wheel-chair-eccdf-default-rtdb.firebaseio.com/motion/flag.json';
+
+    if (toggleSwitch.checked) {
+        joystickContainer.style.display = 'block'; // Show joystick when toggled on
+        console.log('Toggle Status: ON');
+
+        // Send data to Firebase
+        fetch(firebaseURL, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(1)
+        })
+        .then(response => {
+            if (response.ok) {
+                console.log('Successfully set flag to 1 in Firebase');
+            } else {
+                console.error('Failed to set flag to 1 in Firebase');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+
+    } else {
+        joystickContainer.style.display = 'none'; // Hide joystick when toggled off
+        console.log('Toggle Status: OFF');
+
+        // Send data to Firebase
+        fetch(firebaseURL, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(0)
+        })
+        .then(response => {
+            if (response.ok) {
+                console.log('Successfully set flag to 0 in Firebase');
+            } else {
+                console.error('Failed to set flag to 0 in Firebase');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
     }
+}
 
-
-    
-          function toggleDisplay() {
-              const toggleSwitch = document.getElementById('toggleSwitch');
-              const joystickContainer = document.getElementById('joystick');
-
-              if (toggleSwitch.checked) {
-                  joystickContainer.style.display = 'block'; // Show joystick when toggled on
-              } else {
-                  joystickContainer.style.display = 'none'; // Hide joystick when toggled off
-              }
-          }
 
           function startSpeechRecognition() {
         // Check if recognition is already active
@@ -165,13 +203,16 @@ function checkToggleState() {
             if (transcript.includes("start")) {
                 document.getElementById('toggleSwitch').checked = true;
                 toggleDisplay();
+               
                 console.log("Toggle enabled.");
             } else if (transcript.includes("stop")) {
+                
                 document.getElementById('toggleSwitch').checked = false;
                 toggleDisplay();
                 console.log("Toggle disabled.");
             }
         };
+
 
         recognition.onend = () => {
             console.log("Voice recognition stopped.");
@@ -187,7 +228,7 @@ function checkToggleState() {
     }
 
     document.getElementById('startListeningBtn').addEventListener('click', startSpeechRecognition);
-
+    document.addEventListener('DOMContentLoaded', checkToggleState);
       </script>
 </body>
 </html>
