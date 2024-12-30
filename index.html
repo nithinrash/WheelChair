@@ -91,95 +91,77 @@
 <body>
     <h1>Toggle Between GIF and Joystick</h1>
 
-    <!-- Toggle Switch -->
     <label class="switch">
         <input type="checkbox" id="toggleSwitch" onchange="toggleDisplay()">
         <span class="slider"></span>
     </label>
 
     <div id="direction">Direction: Loading...</div>
-    <div id="joystick-info">Angle: N/A | Value: N/A</div>
+    <div id="joystick-info">Angle: N/A | Force: N/A</div>
     
-    <!-- GIF Always Visible -->
     <div id="image-container">
         <iframe id="giphy-iframe" src="https://giphy.com/embed/IeQTqWKqQGghiKS9qU" width="480" height="442" frameBorder="0" class="giphy-embed" allowFullScreen></iframe>
     </div>
 
-    <!-- Joystick Container (Below the GIF) -->
     <div id="joystick"></div>
 
-    <!-- Button to Start Listening -->
     <button id="startListeningBtn" onclick="startSpeechRecognition()">Start Listening</button>
 
     <p><a href="https://giphy.com/gifs/animation-walk-cycle-character-design-IeQTqWKqQGghiKS9qU">via GIPHY</a></p>
 
-    <!-- Include Firebase SDK -->
+    <script src="https://unpkg.com/nipplejs@0.8.4/dist/nipplejs.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.6/firebase-app.js";
-        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/9.6.6/firebase-database.js";
+        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.6.6/firebase-database.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSyC7KZJgRlu1mpwJy7_Q1GQ13ziBVvw66IU",
-            authDomain: "smart-wheel-chair-eccdf.firebaseapp.com",
-            databaseURL: "https://smart-wheel-chair-eccdf-default-rtdb.firebaseio.com",
-            projectId: "smart-wheel-chair-eccdf",
-            storageBucket: "smart-wheel-chair-eccdf.firebasestorage.app",
-            messagingSenderId: "792677170249",
-            appId: "1:792677170249:web:9a70ea01cfc9636035d398"
+            apiKey: "Your API Key",
+            authDomain: "Your Auth Domain",
+            databaseURL: "Your Database URL",
+            projectId: "Your Project ID",
+            storageBucket: "Your Storage Bucket",
+            messagingSenderId: "Your Messaging Sender ID",
+            appId: "Your App ID"
         };
 
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
-        const directionRef = ref(database, 'motion/direction');
-
-        onValue(directionRef, (snapshot) => {
-            const direction = snapshot.val();
-            document.getElementById('direction').innerText = direction || 'No data available';
-        });
-    </script>
-
-    <!-- Joystick Integration -->
-    <script src="https://unpkg.com/nipplejs@0.8.4/dist/nipplejs.js"></script>
-    <script>
         let joystick;
 
         function initializeJoystick() {
             const joystickContainer = document.getElementById('joystick');
-            if (joystick) joystick.destroy();
-
+            if (joystick) {
+                joystick.destroy(); // Important to clean up for reinitializations
+            }
             joystick = nipplejs.create({
                 zone: joystickContainer,
                 mode: 'static',
                 position: { left: '50%', top: '50%' },
                 color: 'blue',
-                size: 200,
+                size: 200
             });
 
             joystick.on('move', (evt, data) => {
                 const angle = data.angle.degree.toFixed(2);
                 const force = data.force.toFixed(2);
-                document.getElementById('joystick-info').innerText = `Angle: ${angle}° | Force: ${force}`;
+                const direction = data.direction ? data.direction.angle : 'N/A';
+                document.getElementById('joystick-info').innerText = `Direction: ${direction} | Angle: ${angle}° | Force: ${force}`;
 
-                let value;
-                if (angle >= 80 && angle <= 100) value = 5; 
-                else if (angle >= 260 && angle <= 280) value = 10; 
-                else if (angle > 170 && angle <= 190) value = 15; 
-                else if (angle <= 20 || angle >= 350) value = 20; 
-
-                if (value !== undefined) {
-                    set(ref(database, 'motion/direction'), value);
-                }
+                set(ref(database, 'motion/direction'), {
+                    angle: angle,
+                    force: force,
+                    direction: direction
+                });
             });
 
             joystick.on('end', () => {
-                document.getElementById('joystick-info').innerText = "Angle: N/A | Value: N/A";
+                document.getElementById('joystick-info').innerText = "Angle: N/A | Force: N/A";
             });
         }
 
         function toggleDisplay() {
             const joystickContainer = document.getElementById('joystick');
             joystickContainer.style.display = document.getElementById('toggleSwitch').checked ? 'block' : 'none';
-
             if (document.getElementById('toggleSwitch').checked) {
                 initializeJoystick();
             }
