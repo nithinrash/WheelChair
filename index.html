@@ -209,7 +209,10 @@
                   } else if (angleDegree >= 350 || angleDegree < 20) { // Right with slight deviation
                       value = 20; // Right
                       console.log("Right");
-                  }
+                  }else {
+                    value = 0; // Center position
+                    console.log("Center");
+        }
 
                   // Update Firebase with new value only if it's defined
                   if (value !== undefined) {
@@ -217,6 +220,12 @@
                   }
               }
           });
+          joystick.on('end', function (evt, data) {
+    // Set the value to 0 when the joystick is released
+    set(directionRef, 0); // Reset to center when joystick is released
+    document.getElementById('joystick-info').innerText = "Joystick released; Position: Center";
+    console.log("Joystick released; Position set to center");
+});
 
       </script>
 
