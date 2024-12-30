@@ -118,6 +118,58 @@
       <script>
 
 
+
+
+
+
+
+function startWakeUpListener() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+        console.error("Speech Recognition API is not supported in this browser.");
+        return;
+    }
+
+    const wakeUpRecognition = new SpeechRecognition();
+    wakeUpRecognition.continuous = true; // Keep listening for the wake-up word
+    wakeUpRecognition.lang = 'en-US';
+
+    wakeUpRecognition.onstart = () => {
+        console.log("Wake-Up Listener is active. Say 'Hey Wheelchair' to start.");
+    };
+
+    wakeUpRecognition.onresult = (event) => {
+        const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase();
+        console.log("Wake-Up Listener heard:", transcript);
+
+        if (transcript.includes("wheelchair")) {
+            console.log("Wake-Up Word Detected! Starting speech recognition...");
+            wakeUpRecognition.stop(); // Stop wake-up listener temporarily
+            startSpeechRecognition(); // Trigger main speech recognition
+        }
+    };
+
+    wakeUpRecognition.onerror = (event) => {
+        console.error("Wake-Up Listener Error:", event.error);
+    };
+
+    wakeUpRecognition.onend = () => {
+        console.log("Wake-Up Listener stopped. Restarting...");
+        setTimeout(() => wakeUpRecognition.start(), 1000); // Restart the wake-up listener after 1 second
+    };
+
+    wakeUpRecognition.start();
+}
+
+// ✅ Start Wake-Up Listener on Page Load
+document.addEventListener('DOMContentLoaded', () => {
+    startWakeUpListener();
+});
+
+
+
+
 function toggleDisplay() {
     const toggleSwitch = document.getElementById('toggleSwitch');
     const joystickContainer = document.getElementById('joystick');
