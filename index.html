@@ -18,9 +18,14 @@
             font-size: 24px;
         }
 
+        #joystick-info {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+
         #image-container {
             margin-top: 20px;
-            transition: transform 0.5s;
+            transition: transform 0.5s; /* Smooth transition for flipping */
         }
 
         iframe {
@@ -92,7 +97,8 @@
         <span class="slider"></span>
     </label>
 
-    <div id="direction">Loading...</div>
+    <div id="direction">Direction: Loading...</div>
+    <div id="joystick-info">Angle: N/A | Value: N/A</div>
     
     <!-- GIF Always Visible -->
     <div id="image-container">
@@ -129,21 +135,6 @@
         onValue(directionRef, (snapshot) => {
             const direction = snapshot.val();
             document.getElementById('direction').innerText = direction || 'No data available';
-
-            switch (direction) {
-                case 5:
-                    document.getElementById('direction').innerText += ' - Front';
-                    break;
-                case 10:
-                    document.getElementById('direction').innerText += ' - Reverse';
-                    break;
-                case 15:
-                    document.getElementById('direction').innerText += ' - Left';
-                    break;
-                case 20:
-                    document.getElementById('direction').innerText += ' - Right';
-                    break;
-            }
         });
     </script>
 
@@ -154,9 +145,7 @@
 
         function initializeJoystick() {
             const joystickContainer = document.getElementById('joystick');
-            if (joystick) {
-                joystick.destroy(); // Destroy existing joystick instance
-            }
+            if (joystick) joystick.destroy();
 
             joystick = nipplejs.create({
                 zone: joystickContainer,
@@ -164,50 +153,46 @@
                 position: { left: '50%', top: '50%' },
                 color: 'blue',
                 size: 200,
-                multitouch: true,
-                restJoystick: true
             });
 
             joystick.on('move', (evt, data) => {
-                if (data.angle) {
-                    let value;
-                    if (data.angle.degree >= 80 && data.angle.degree <= 100) value = 5; 
-                    else if (data.angle.degree >= 260 && data.angle.degree <= 280) value = 10;
-                    else if (data.angle.degree > 170 && data.angle.degree <= 190) value = 15;
-                    else if (data.angle.degree <= 20 || data.angle.degree >= 350) value = 20;
+                const angle = data.angle.degree.toFixed(2);
+                const force = data.force.toFixed(2);
+                document.getElementById('joystick-info').innerText = `Angle: ${angle}° | Force: ${force}`;
 
-                    if (value !== undefined) set(ref(database, 'motion/direction'), value);
+                let value;
+                if (angle >= 80 && angle <= 100) value = 5; 
+                else if (angle >= 260 && angle <= 280) value = 10; 
+                else if (angle > 170 && angle <= 190) value = 15; 
+                else if (angle <= 20 || angle >= 350) value = 20; 
+
+                if (value !== undefined) {
+                    set(ref(database, 'motion/direction'), value);
                 }
+            });
+
+            joystick.on('end', () => {
+                document.getElementById('joystick-info').innerText = "Angle: N/A | Value: N/A";
             });
         }
 
         function toggleDisplay() {
             const joystickContainer = document.getElementById('joystick');
-            const toggleSwitch = document.getElementById('toggleSwitch');
+            joystickContainer.style.display = document.getElementById('toggleSwitch').checked ? 'block' : 'none';
 
-            joystickContainer.style.display = toggleSwitch.checked ? 'block' : 'none';
-
-            if (toggleSwitch.checked) initializeJoystick();
+            if (document.getElementById('toggleSwitch').checked) {
+                initializeJoystick();
+            }
         }
 
-        let isListening = false;
         function startSpeechRecognition() {
-            if (isListening) return;
-
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRecognition) return;
-
-            const recognition = new SpeechRecognition();
-            isListening = true;
-
+            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
             recognition.onresult = (event) => {
-                const transcript = event.results[0][0].transcript.toLowerCase();
-                if (transcript.includes("start")) toggleSwitch.checked = true;
-                if (transcript.includes("stop")) toggleSwitch.checked = false;
+                const command = event.results[0][0].transcript.toLowerCase();
+                if (command.includes("start")) document.getElementById('toggleSwitch').checked = true;
+                if (command.includes("stop")) document.getElementById('toggleSwitch').checked = false;
                 toggleDisplay();
             };
-
-            recognition.onend = () => isListening = false;
             recognition.start();
         }
     </script>
