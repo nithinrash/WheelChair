@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toggle Switch for GIF and Joystick</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            background-color: #cdcccd; /* Background color */
+        }
+        #direction {
+            margin-top: 20px;
+            font-size: 24px;
+        }
+        #image-container {
+            margin-top: 20px;
+            transition: transform 0.5s; /* Smooth transition for flipping */
+        }
+        iframe {
+            max-width: 100%; /* Make iframe responsive */
+            height: auto; /* Maintain aspect ratio */
+        }
+        #joystick {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 20px auto;
+            display: none; /* Initially hidden */
+        }
+        
+        /* Toggle Switch Styles */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .switch input {
+            opacity: 0; /* Hide default checkbox */
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+        }
+
+        input:checked + .slider {
+            background-color: #2196F3; /* Color when checked */
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px); /* Move the slider when checked */
+        }
+
+    </style>
+</head>
+<body>
+    <h1>Toggle Between GIF and Joystick</h1>
+
+    <!-- Toggle Switch -->
+    <label class="switch">
+        <input type="checkbox" id="toggleSwitch" onchange="toggleDisplay()">
+        <span class="slider"></span>
+    </label>
+
+    <div id="direction">Loading...</div>
+    
+    <div id="image-container">
+        <iframe id="giphy-iframe" src="https://giphy.com/embed/IeQTqWKqQGghiKS9qU" width="480" height="442" frameBorder="0" class="giphy-embed" allowFullScreen></iframe>
+    </div>
+
+    <!-- Joystick Container -->
+    <div id="joystick"></div>
+
+    <!-- Button to Start Listening -->
+    <button id="startListeningBtn" onclick="startSpeechRecognition()">Start Listening</button>
+
+    <!-- Include Firebase SDK -->
+    <script type="module">
+        // Import the necessary Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.6/firebase-app.js";
+        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/9.6.6/firebase-database.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyC7KZJgRlu1mpwJy7_Q1GQ13ziBVvw66IU",
+            authDomain: "smart-wheel-chair-eccdf.firebaseapp.com",
+            databaseURL: "https://smart-wheel-chair-eccdf-default-rtdb.firebaseio.com",
+            projectId: "smart-wheel-chair-eccdf",
+            storageBucket: "smart-wheel-chair-eccdf.firebasestorage.app",
+            messagingSenderId: "792677170249",
+            appId: "1:792677170249:web:9a70ea01cfc9636035d398"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // Reference to the motion/direction path in your database
+        const directionRef = ref(database, 'motion/direction');
+
+        // Fetch and display the direction data
+        onValue(directionRef, (snapshot) => {
+            const direction = snapshot.val();
+            document.getElementById('direction').innerText = direction ? direction : 'No data available';
+
+             // Handle image display logic based on the value
+             const imageContainer = document.getElementById('image-container');
+            
+             if (direction === 15) {
+                imageContainer.style.transform = 'rotateY(0deg)'; // Show normally
+                document.getElementById('direction').innerText += ' - Normal Position';
+              } else if (direction === 20) {
+                imageContainer.style.transform = 'rotateY(180deg)'; // Flip the image
+                document.getElementById('direction').innerText += ' - Flipped Position';
+              }
+
+              // Display specific text based on values
+              let additionalText = '';
+              switch (direction) {
+                case 5:
+                  additionalText = 'Front';
+                  break;
+                case 10:
+                  additionalText = 'Reverse';
+                  break;
+                case 15:
+                  additionalText = 'Left';
+                  break;
+                case 20:
+                  additionalText = 'Right';
+                  break;
+                default:
+                  additionalText = '';
+                  break;
+              }
+              
+              if (additionalText) {
+                document.getElementById('direction').innerText += ` - ${additionalText}`;
+              }
+
+          }, (error) => {
+              console.error("Error fetching data:", error);
+              document.getElementById('direction').innerText = 'Error fetching data';
+          });
+
+          // Initialize Joystick
+          const joystickContainer = document.getElementById('joystick');
+          
+          const options = {
+              zone: joystickContainer,
+              mode: 'static',
+              position: { left: '50%', top: '50%' },
+              color: 'blue',
+              size: 200,
+              lockX: false,
+              lockY: false,
+              catchDistance: 50,
+              threshold : 0.1,
+              multitouch : true,
+              fadeTime : 1000,
+              restOpacity : 0.5,
+              dynamicPage : true
+          };
+
+          const joystick = nipplejs.create(options);
+
+          joystick.on('move', function (evt, data) {
+              if (data && data.angle) { // Check if data and angle are defined
+                  const angleDegree = data.angle.degree; // Get angle in degrees
+                  console.log("Joystick Angle:", angleDegree); // Log the angle
+
+                  let value;
+
+                  // Define the direction based on the specified angle ranges with slight deviations
+                  if (angleDegree >= 80 && angleDegree < 100) { // Up with slight deviation
+                      value = 5; // Up
+                      console.log("Up");
+                  } else if (angleDegree >= 260 && angleDegree < 280) { // Down with slight deviation
+                      value = 10; // Down
+                      console.log("Down");
+                  } else if (angleDegree > 170 && angleDegree < 190) { // Left with slight deviation
+                      value = 15; // Left
+                      console.log("Left");
+                  } else if (angleDegree >= 350 || angleDegree < 20) { // Right with slight deviation
+                      value = 20; // Right
+                      console.log("Right");
+                  }
+
+                  // Update Firebase with new value only if it's defined
+                  if (value !== undefined) {
+                      set(directionRef, value); // Update Firebase with new value
+                  }
+              }
+          });
+
+      </script>
+
+      <!-- Include NippleJS Library -->
+      <script src="https://unpkg.com/nipplejs@0.8.4/dist/nipplejs.js"></script>
+
+      <p><a href="https://giphy.com/gifs/animation-walk-cycle-character-design-IeQTqWKqQGghiKS9qU">via GIPHY</a></p>
+
+      <script>
+          function toggleDisplay() {
+              const toggleSwitch = document.getElementById('toggleSwitch');
+              const joystickContainer = document.getElementById('joystick');
+
+              if (toggleSwitch.checked) {
+                  joystickContainer.style.display = 'block'; // Show joystick when toggled on
+              } else {
+                  joystickContainer.style.display = 'none'; // Hide joystick when toggled off
+              }
+          }
+
+          function startSpeechRecognition() {
+              const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+              if (!SpeechRecognition) {
+                  console.error("Speech Recognition API not supported");
+                  return; 
+              }
+
+              const recognition = new SpeechRecognition();
+              
+              recognition.onstart = () => {
+                  console.log("Voice recognition started. Speak now.");
+              };
+
+              recognition.onresult = (event) => {
+                  const transcript = event.results[0][0].transcript.toLowerCase();
+                  console.log("You said:", transcript);   // Log all recognized words
+
+                  if (transcript.includes("start")) {
+                      document.getElementById('toggleSwitch').checked = true; // Enable toggle switch
+                      toggleDisplay(); // Show joystick
+                      console.log("Toggle enabled.");
+                  } else if (transcript.includes("stop")) {
+                      document.getElementById('toggleSwitch').checked = false; // Disable toggle switch
+                      toggleDisplay(); // Hide joystick
+                      console.log("Toggle disabled.");
+                  }
+
+                  console.log("Recognized words:", transcript); // Log all recognized words for debugging purposes.
+              };
+
+              recognition.onend = () => {
+                  recognition.start(); // Restart recognition after it ends
+              };
+
+              recognition.start(); // Start listening for speech input
+          }
+
+          document.getElementById('startListeningBtn').addEventListener('click', startSpeechRecognition);
+
+      </script>
+</body>
+</html>
