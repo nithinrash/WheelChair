@@ -30,7 +30,9 @@
 
     <!-- Button to Start Listening -->
     <button id="startListeningBtn" onclick="startSpeechRecognition()">Start Listening</button>
-
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/speech-commands"></script>
+    
     <!-- Include Firebase SDK -->
     <script type="module">
         // Import the necessary Firebase modules
@@ -108,12 +110,29 @@
 
         // Listen to toggle status from Firebase and log it
 
+
+
+
+
+
+
+
+
+
+        
     </script>
 
       <!-- Include NippleJS Library -->
       <script src="https://unpkg.com/nipplejs@0.8.4/dist/nipplejs.js"></script>
 
      
+
+
+
+
+
+
+      
 
       <script>
 
@@ -122,50 +141,161 @@
 
 
 
-
+// ✅ Improved Hot Wake-Up Word Detection
+// ✅ Improved Wake-Up Word Detection with Error Handling
 function startWakeUpListener() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-        console.error("Speech Recognition API is not supported in this browser.");
+        console.error("❌ Speech Recognition API is not supported in this browser.");
+        alert("Speech Recognition API is not supported in this browser.");
         return;
     }
 
-    const wakeUpRecognition = new SpeechRecognition();
-    wakeUpRecognition.continuous = true; // Keep listening for the wake-up word
+    let wakeUpRecognition = new SpeechRecognition();
+    wakeUpRecognition.continuous = true; // Continuous listening
     wakeUpRecognition.lang = 'en-US';
+    wakeUpRecognition.interimResults = false;
+
+    let isRestarting = false; // Prevent multiple restarts
+    let retryCount = 0; // Retry counter
 
     wakeUpRecognition.onstart = () => {
-        console.log("Wake-Up Listener is active. Say 'Hey Wheelchair' to start.");
+        console.log("✅ Wake-Up Listener is active. Say 'Hey Wheelchair' to start.");
+        isRestarting = false; // Reset restart flag
     };
 
     wakeUpRecognition.onresult = (event) => {
         const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase();
-        console.log("Wake-Up Listener heard:", transcript);
+        console.log("🎤 Wake-Up Listener heard:", transcript);
 
-        if (transcript.includes("wheelchair")) {
-            console.log("Wake-Up Word Detected! Starting speech recognition...");
-            wakeUpRecognition.stop(); // Stop wake-up listener temporarily
+        if (transcript.includes("hey wheelchair")) {
+            console.log("🚀 Wake-Up Word Detected! Starting speech recognition...");
+            wakeUpRecognition.stop(); // Stop wake-up listener
             startSpeechRecognition(); // Trigger main speech recognition
         }
     };
 
     wakeUpRecognition.onerror = (event) => {
-        console.error("Wake-Up Listener Error:", event.error);
+        console.error("❌ Wake-Up Listener Error:", event.error);
+
+        if (event.error === 'network') {
+            console.warn("⚠️ Network error occurred. Pausing retries.");
+            alert("⚠️ Network error occurred. Please check your internet connection and restart manually.");
+            wakeUpRecognition.stop();
+            return;
+        }
+
+        if (event.error === 'aborted') {
+            console.warn("⚠️ Listener aborted. Restarting after delay...");
+            restartWakeUpListener(3000); // Restart after 3 seconds
+        }
     };
 
     wakeUpRecognition.onend = () => {
-        console.log("Wake-Up Listener stopped. Restarting...");
-        setTimeout(() => wakeUpRecognition.start(), 1000); // Restart the wake-up listener after 1 second
+        console.log("🔄 Wake-Up Listener stopped. Restarting...");
+        restartWakeUpListener(2000); // Restart after 2 seconds
     };
+
+    // Restart listener with a cooldown to prevent multiple rapid restarts
+    function restartWakeUpListener(delay = 2000) {
+        if (isRestarting || retryCount >= 5) {
+            console.warn("⚠️ Listener restart limit reached or already restarting.");
+            alert("Wake-Up Listener failed to restart after multiple attempts. Please refresh the page.");
+            return;
+        }
+
+        isRestarting = true; // Set restart flag
+        retryCount++;
+        setTimeout(() => {
+            console.log(`🔄 Restarting Wake-Up Listener (Attempt ${retryCount})...`);
+            startWakeUpListener(); // Restart after a delay
+        }, delay);
+    }
 
     wakeUpRecognition.start();
 }
 
-// ✅ Start Wake-Up Listener on Page Load
+// ✅ Automatically Start Wake-Up Listener on Page Load
 document.addEventListener('DOMContentLoaded', () => {
     startWakeUpListener();
 });
+
+
+
+
+
+let recognizer;
+let isListening = false;
+
+// ✅ Initialize TensorFlow Model
+async function initializeWakeWordModel() {
+    try {
+        console.log('🔄 Initializing Wake Word Model...');
+        recognizer = await speechCommands.create('BROWSER_FFT');
+        await recognizer.ensureModelLoaded();
+        console.log('✅ Wake Word Model Loaded Successfully!');
+    } catch (error) {
+        console.error('❌ Failed to load wake word model:', error);
+    }
+}
+
+// ✅ Start Listening for Wake Word
+async function startWakeUpListener() {
+    if (!recognizer) {
+        console.warn('⚠️ Model not loaded yet. Please wait.');
+        return;
+    }
+
+    if (isListening) {
+        console.warn('⚠️ Already listening for wake word.');
+        return;
+    }
+
+    console.log('🎤 Listening for "Hey Wheelchair"...');
+    isListening = true;
+
+    recognizer.listen(result => {
+        const scores = result.scores; // Probability scores for each word
+        const words = recognizer.wordLabels(); // Word labels in the model
+
+        // Find the word with the highest probability
+        const maxScoreIndex = scores.indexOf(Math.max(...scores));
+        const detectedWord = words[maxScoreIndex];
+
+        console.log(`🗣️ Detected Word: ${detectedWord}`);
+
+        if (detectedWord === 'hey wheelchair') {
+            console.log('🚀 Wake-Up Word Detected: Hey Wheelchair!');
+            stopWakeUpListener();
+            startSpeechRecognition();
+        }
+    }, {
+        includeSpectrogram: false,
+        probabilityThreshold: 0.75, // Adjust the confidence threshold
+        invokeCallbackOnNoiseAndUnknown: false,
+    });
+}
+
+// ✅ Stop Listening for Wake Word
+function stopWakeUpListener() {
+    if (recognizer && isListening) {
+        recognizer.stopListening();
+        isListening = false;
+        console.log('🛑 Stopped Listening for Wake Word.');
+    }
+}
+
+// ✅ Start Wake-Up Listener on Page Load
+document.addEventListener('DOMContentLoaded', async () => {
+    await initializeWakeWordModel();
+    startWakeUpListener();
+});
+
+function startSpeechRecognition() {
+    console.log('🎧 Starting Main Speech Recognition...');
+    // Placeholder for your main speech recognition function
+}
 
 
 
