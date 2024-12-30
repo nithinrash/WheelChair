@@ -11,7 +11,7 @@
     </style>
 </head>
 <body>
-    <h1>Whell chair control</h1>
+    <h1>Wheel chair control</h1>
 
     <!-- Toggle Switch -->
     <label class="switch">
@@ -141,87 +141,6 @@
 
 
 
-// ✅ Improved Hot Wake-Up Word Detection
-// ✅ Improved Wake-Up Word Detection with Error Handling
-function startWakeUpListener() {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-        console.error("❌ Speech Recognition API is not supported in this browser.");
-        alert("Speech Recognition API is not supported in this browser.");
-        return;
-    }
-
-    let wakeUpRecognition = new SpeechRecognition();
-    wakeUpRecognition.continuous = true; // Continuous listening
-    wakeUpRecognition.lang = 'en-US';
-    wakeUpRecognition.interimResults = false;
-
-    let isRestarting = false; // Prevent multiple restarts
-    let retryCount = 0; // Retry counter
-
-    wakeUpRecognition.onstart = () => {
-        console.log("✅ Wake-Up Listener is active. Say 'Hey Wheelchair' to start.");
-        isRestarting = false; // Reset restart flag
-    };
-
-    wakeUpRecognition.onresult = (event) => {
-        const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase();
-        console.log("🎤 Wake-Up Listener heard:", transcript);
-
-        if (transcript.includes("hey wheelchair")) {
-            console.log("🚀 Wake-Up Word Detected! Starting speech recognition...");
-            wakeUpRecognition.stop(); // Stop wake-up listener
-            startSpeechRecognition(); // Trigger main speech recognition
-        }
-    };
-
-    wakeUpRecognition.onerror = (event) => {
-        console.error("❌ Wake-Up Listener Error:", event.error);
-
-        if (event.error === 'network') {
-            console.warn("⚠️ Network error occurred. Pausing retries.");
-            alert("⚠️ Network error occurred. Please check your internet connection and restart manually.");
-            wakeUpRecognition.stop();
-            return;
-        }
-
-        if (event.error === 'aborted') {
-            console.warn("⚠️ Listener aborted. Restarting after delay...");
-            restartWakeUpListener(3000); // Restart after 3 seconds
-        }
-    };
-
-    wakeUpRecognition.onend = () => {
-        console.log("🔄 Wake-Up Listener stopped. Restarting...");
-        restartWakeUpListener(2000); // Restart after 2 seconds
-    };
-
-    // Restart listener with a cooldown to prevent multiple rapid restarts
-    function restartWakeUpListener(delay = 2000) {
-        if (isRestarting || retryCount >= 5) {
-            console.warn("⚠️ Listener restart limit reached or already restarting.");
-            alert("Wake-Up Listener failed to restart after multiple attempts. Please refresh the page.");
-            return;
-        }
-
-        isRestarting = true; // Set restart flag
-        retryCount++;
-        setTimeout(() => {
-            console.log(`🔄 Restarting Wake-Up Listener (Attempt ${retryCount})...`);
-            startWakeUpListener(); // Restart after a delay
-        }, delay);
-    }
-
-    wakeUpRecognition.start();
-}
-
-// ✅ Automatically Start Wake-Up Listener on Page Load
-document.addEventListener('DOMContentLoaded', () => {
-    startWakeUpListener();
-});
-
-
 
 
 
@@ -240,7 +159,7 @@ async function initializeWakeWordModel() {
     }
 }
 
-// ✅ Start Listening for Wake Word
+// ✅ Start Wake-Up Word Listener
 async function startWakeUpListener() {
     if (!recognizer) {
         console.warn('⚠️ Model not loaded yet. Please wait.');
@@ -265,10 +184,9 @@ async function startWakeUpListener() {
 
         console.log(`🗣️ Detected Word: ${detectedWord}`);
 
-        if (detectedWord === 'hello') {
+        if (detectedWord === 'six') {
             console.log('🚀 Wake-Up Word Detected: Hey Wheelchair!');
-            stopWakeUpListener();
-            startSpeechRecognition();
+            startSpeechRecognition(); // Trigger main speech recognition
         }
     }, {
         includeSpectrogram: false,
@@ -291,11 +209,53 @@ document.addEventListener('DOMContentLoaded', async () => {
     await initializeWakeWordModel();
     startWakeUpListener();
 });
-
 function startSpeechRecognition() {
     console.log('🎧 Starting Main Speech Recognition...');
-    // Placeholder for your main speech recognition function
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+        console.error("❌ Speech Recognition API is not supported in this browser.");
+        alert("Speech Recognition API is not supported in this browser.");
+        return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true; // Keep listening after each result
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+
+    recognition.onstart = () => {
+        console.log("🎤 Voice Recognition Started. Speak Now...");
+    };
+
+    recognition.onresult = (event) => {
+        const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase();
+        console.log("🎙️ You said:", transcript);
+
+        if (transcript.includes("start")) {
+            document.getElementById('toggleSwitch').checked = true;
+            toggleDisplay();
+            console.log("✅ Toggle Enabled via Voice Command.");
+        } else if (transcript.includes("stop")) {
+            document.getElementById('toggleSwitch').checked = false;
+            toggleDisplay();
+            console.log("❌ Toggle Disabled via Voice Command.");
+        }
+    };
+
+    recognition.onerror = (event) => {
+        console.error("❌ Speech Recognition Error:", event.error);
+    };
+
+    recognition.onend = () => {
+        console.warn("🔄 Speech Recognition Ended. Restarting...");
+        recognition.start(); // Automatically restart the recognition
+    };
+
+    recognition.start(); // Start listening immediately
 }
+
 
 
 
@@ -307,52 +267,41 @@ function toggleDisplay() {
 
     if (toggleSwitch.checked) {
         joystickContainer.style.display = 'block'; // Show joystick when toggled on
-        console.log('Toggle Status: ON');
+        console.log('✅ Toggle Status: ON');
 
         // Send data to Firebase
         fetch(firebaseURL, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(1)
         })
         .then(response => {
-            if (response.ok) {
-                console.log('Successfully set flag to 1 in Firebase');
-            } else {
-                console.error('Failed to set flag to 1 in Firebase');
-            }
+            if (response.ok) console.log('✅ Successfully set flag to 1 in Firebase');
+            else console.error('❌ Failed to set flag to 1 in Firebase');
         })
-        .catch(error => {
-            console.error('Error:', error);
-        });
+        .catch(error => console.error('❌ Error:', error));
 
     } else {
         joystickContainer.style.display = 'none'; // Hide joystick when toggled off
-        console.log('Toggle Status: OFF');
+        console.log('❌ Toggle Status: OFF');
 
         // Send data to Firebase
         fetch(firebaseURL, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(0)
         })
         .then(response => {
-            if (response.ok) {
-                console.log('Successfully set flag to 0 in Firebase');
-            } else {
-                console.error('Failed to set flag to 0 in Firebase');
-            }
+            if (response.ok) console.log('✅ Successfully set flag to 0 in Firebase');
+            else console.error('❌ Failed to set flag to 0 in Firebase');
         })
-        .catch(error => {
-            console.error('Error:', error);
-        });
+        .catch(error => console.error('❌ Error:', error));
     }
 }
-
+document.addEventListener('DOMContentLoaded', async () => {
+    await initializeWakeWordModel();
+    startWakeUpListener();
+});
 
           function startSpeechRecognition() {
         // Check if recognition is already active
