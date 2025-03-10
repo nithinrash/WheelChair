@@ -6,26 +6,26 @@
     <title>Wheel chair control</title>
      <link rel="stylesheet" href="styles.css">
     <style>
-
-
+        /* Hide the toggle switch */
+        .switch {
+            display: none;
+        }
     </style>
 </head>
 <body>
     <h1>Wheel chair control</h1>
 
-    <!-- Toggle Switch -->
+    <!-- Toggle Switch (hidden) -->
     <label class="switch">
-        <input type="checkbox" id="toggleSwitch" onchange="toggleDisplay()">
+        <input type="checkbox" id="toggleSwitch" checked>
         <span class="slider"></span>
     </label>
-
-    <!-- <div id="direction">Loading...</div> -->
     
     <div id="image-container" style="color: #cdcccd;">
         <iframe id="giphy-iframe" src="https://giphy.com/embed/IeQTqWKqQGghiKS9qU" width="480" height="442" frameBorder="0" class="giphy-embed" allowFullScreen></iframe>
     </div>
 
-    <!-- Joystick Container -->
+    <!-- Joystick Container (always visible) -->
     <div id="joystick"></div>
 
     <!-- Button to Start Listening -->
@@ -54,6 +54,11 @@
         const toggleFlagRef = ref(database, 'motion/flag');
         const directionRef = ref(database, 'motion/direction');
         const joystickContainer = document.getElementById('joystick');
+        
+        // Set flag to 1 on page load
+        set(toggleFlagRef, 1)
+            .then(() => console.log("Flag set to 1 in Firebase"))
+            .catch((error) => console.error("Error setting flag:", error));
     
         // Joystick Options
         const options = {
@@ -80,7 +85,6 @@
     
             if (data.distance < 1) {  // Assuming the center zone is less than 1
                 value = 0; // Center position
-                document.getElementById('direction').innerText = value;
             } else if (angleDegree >= 85 && angleDegree < 100) {
                 value = 5; // Up
             } else if (angleDegree >= 260 && angleDegree < 280) {
@@ -93,8 +97,6 @@
                 value = 0;
             }
 
-            //angleDegree > 180 && angleDegree < 190 left
-    //angleDegree >= 350 || angleDegree < 20
             console.log("Joystick Angle:", angleDegree, "Value:", value);
             set(directionRef, value) // Update Firebase with new value
                 .then(() => console.log("Direction value updated in Firebase:", value))
@@ -105,140 +107,98 @@
             set(directionRef, 0) // Reset to center when joystick is released
                 .then(() => console.log("Joystick reset to center in Firebase"))
                 .catch((error) => console.error("Error resetting direction:", error));
-             // Display 'Stop' when joystick is centered
         });
-
-        // Listen to toggle status from Firebase and log it
-
     </script>
 
-      <!-- Include NippleJS Library -->
-      <script src="https://unpkg.com/nipplejs@0.8.4/dist/nipplejs.js"></script>
+    <!-- Include NippleJS Library -->
+    <script src="https://unpkg.com/nipplejs@0.8.4/dist/nipplejs.js"></script>
 
-     
-
-      <script>
-
-
-
-
-
-;
-
-
-
-
-function toggleDisplay() {
-    const toggleSwitch = document.getElementById('toggleSwitch');
-    const joystickContainer = document.getElementById('joystick');
-    const firebaseURL = 'https://smart-wheel-chair-eccdf-default-rtdb.firebaseio.com/motion/flag.json';
-
-    if (toggleSwitch.checked) {
-        joystickContainer.style.display = 'block'; // Show joystick when toggled on
-        console.log('Toggle Status: ON');
-
-        // Send data to Firebase
-        fetch(firebaseURL, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(1)
-        })
-        .then(response => {
-            if (response.ok) {
-                console.log('Successfully set flag to 1 in Firebase');
-            } else {
-                console.error('Failed to set flag to 1 in Firebase');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
-
-    } else {
-        joystickContainer.style.display = 'none'; // Hide joystick when toggled off
-        console.log('Toggle Status: OFF');
-
-        // Send data to Firebase
-        fetch(firebaseURL, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(0)
-        })
-        .then(response => {
-            if (response.ok) {
-                console.log('Successfully set flag to 0 in Firebase');
-            } else {
-                console.error('Failed to set flag to 0 in Firebase');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
-    }
-}
-
-
-          function startSpeechRecognition() {
-        // Check if recognition is already active
-        if (window.recognition && window.recognition.isListening) {
-            console.log("Recognition is already active.");
-            return;
+    <script>
+        // Modified toggleDisplay function - always keeps flag at 1
+        function toggleDisplay() {
+            const firebaseURL = 'https://smart-wheel-chair-eccdf-default-rtdb.firebaseio.com/motion/flag.json';
+            const joystickContainer = document.getElementById('joystick');
+            
+            // Always show joystick
+            joystickContainer.style.display = 'block';
+            
+            // Always set flag to 1
+            fetch(firebaseURL, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(1)
+            })
+            .then(response => {
+                if (response.ok) {
+                    console.log('Successfully set flag to 1 in Firebase');
+                } else {
+                    console.error('Failed to set flag to 1 in Firebase');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
         }
 
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        function startSpeechRecognition() {
+            // Check if recognition is already active
+            if (window.recognition && window.recognition.isListening) {
+                console.log("Recognition is already active.");
+                return;
+            }
 
-        if (!SpeechRecognition) {
-            console.error("Speech Recognition API not supported");
-            return;
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+            if (!SpeechRecognition) {
+                console.error("Speech Recognition API not supported");
+                return;
+            }
+
+            const recognition = new SpeechRecognition();
+            recognition.continuous = false; // Do not automatically restart
+            recognition.isListening = true; // Custom flag to manage listening state
+
+            window.recognition = recognition; // Assign to global variable for broader control
+
+            recognition.onstart = () => {
+                console.log("Voice recognition started. Speak now.");
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript.toLowerCase();
+                console.log("You said:", transcript);
+
+                // Voice commands always keep the flag set to 1
+                if (transcript.includes("start")) {
+                    console.log("Command received but flag already enabled.");
+                } else if (transcript.includes("stop")) {
+                    console.log("Stop command ignored as flag must stay enabled.");
+                }
+            };
+
+            recognition.onend = () => {
+                console.log("Voice recognition stopped.");
+                recognition.isListening = false; // Update flag when recognition ends
+            };
+
+            recognition.onerror = (event) => {
+                console.error("Speech Recognition Error:", event.error);
+                recognition.isListening = false;
+            };
+
+            recognition.start();
         }
 
-        const recognition = new SpeechRecognition();
-        recognition.continuous = false; // Do not automatically restart
-        recognition.isListening = true; // Custom flag to manage listening state
+        // Run on page load to ensure flag is set to 1 and joystick is visible
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set toggle to checked and call toggleDisplay function
+            document.getElementById('toggleSwitch').checked = true;
+            toggleDisplay();
+        });
 
-        window.recognition = recognition; // Assign to global variable for broader control
-
-        recognition.onstart = () => {
-            console.log("Voice recognition started. Speak now.");
-        };
-
-        recognition.onresult = (event) => {
-            const transcript = event.results[0][0].transcript.toLowerCase();
-            console.log("You said:", transcript);
-
-            if (transcript.includes("start")) {
-                document.getElementById('toggleSwitch').checked = true;
-                toggleDisplay();
-               
-                console.log("Toggle enabled.");
-            } else if (transcript.includes("stop")) {
-                
-                document.getElementById('toggleSwitch').checked = false;
-                toggleDisplay();
-                console.log("Toggle disabled.");
-            }
-        };
-
-
-        recognition.onend = () => {
-            console.log("Voice recognition stopped.");
-            recognition.isListening = false; // Update flag when recognition ends
-        };
-
-        recognition.onerror = (event) => {
-            console.error("Speech Recognition Error:", event.error);
-            recognition.isListening = false;
-        };
-
-        recognition.start();
-    }
-
-    document.getElementById('startListeningBtn').addEventListener('click', startSpeechRecognition);
-    document.addEventListener('DOMContentLoaded', checkToggleState);
-      </script>
+        document.getElementById('startListeningBtn').addEventListener('click', startSpeechRecognition);
+    </script>
 </body>
 </html>
